@@ -1,0 +1,19 @@
+{
+    "name": "fb-login",
+    "description": "Facebook Login & Fetch User profile",
+    "keywords": ["fb login", "facebook login"],
+    "license": "MIT",
+    "type": "project",
+    "require": {
+        "slim/slim": "^3.9",
+        "vlucas/phpdotenv": "^2.4",
+        "facebook/graph-sdk": "^5.6",
+        "slim/php-view": "^2.2",
+        "monolog/monolog": "^1.23"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app"
+        }
+    }
+}
