@@ -4,16 +4,19 @@ if( !session_id() ) {
     session_start();
 }
 
+
+/** Define ROOTPATH as this file's directory */
+if ( ! defined( 'ROOTPATH' ) ) {
+    define( 'ROOTPATH', 'http://127.0.0.1/slim/slim-fblogin/' ); // OnProduction change to dirname( __FILE__ ) . '/' OR  __DIR__
+}
+
+require_once 'vendor/autoload.php';
+
+// Include required libraries
 use Facebook\Facebook;
 use Facebook\Exceptions\FacebookResponseException;
 use Facebook\Exceptions\FacebookSDKException;
 
-/** Define ROOTPATH as this file's directory */
-if ( ! defined( 'ROOTPATH' ) ) {
-    define( 'ROOTPATH', 'http://127.0.0.1/slim/slim-fblogin/' ); // OnProduction change to dirname( __FILE__ ) . '/'  OR __DIR__
-}
-
-require_once 'vendor/autoload.php';
 
 try {
     (new Dotenv\Dotenv(__DIR__))->load();
@@ -21,40 +24,12 @@ try {
     //
 }
 
-
 // Configuration and setup Facebook SDK
-
 $appId          = getenv('FB_APP_ID'); //Facebook App ID
 $appSecret      = getenv('FB_APP_SECRET'); //Facebook App Secret
 $redirectURL    = 'http://localhost/Slim/slim-fblogin/'; //Callback URL
 $fbPermissions  = array('email');  //Optional permissions
 
-$fb = new Facebook(array(
-    'app_id' => $appId,
-    'app_secret' => $appSecret,
-    'default_graph_version' => 'v2.11',
-));
-
-
-// Get redirect login helper
-$helper = $fb->getRedirectLoginHelper();
-
-// Try to get access token
-try {
-
-    if( isset($_SESSION['facebook_access_token']) ) {
-        $accessToken = $_SESSION['facebook_access_token'];
-    } else {
-        $accessToken = $helper->getAccessToken();
-    }
-    
-} catch( FacebookResponseException $e ) {
-    echo 'Graph returned an error: ' . $e->getMessage();
-    exit;
-} catch( FacebookSDKException $e ) {
-    echo 'Facebook SDK returned an error: ' . $e->getMessage();
-    exit;
-}
 
 $config['displayErrorDetails'] = getenv('APP_DEBUG');
 $config['addContentLengthHeader'] = false;
@@ -79,7 +54,7 @@ $container['logger'] = function($c) {
 };
 
 // Add a Database Connection
-$container['db'] = function ($c) {
+$container['db'] = function($c) {
     $db = $c['settings']['db'];
     $pdo = new PDO("mysql:host=" . $db['host'] . ";dbname=" . $db['dbname'], 
                     $db['user'], $db['pass']);
@@ -87,11 +62,40 @@ $container['db'] = function ($c) {
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     return $pdo;
 };
+ 
+
+$fb = new Facebook(array(
+    'app_id' => $appId,
+    'app_secret' => $appSecret,
+    'default_graph_version' => 'v2.11',
+));
+
+// Get redirect login helper
+$helper = $fb->getRedirectLoginHelper();
+
+// Try to get access token
+try {
     
+    if( isset($_SESSION['facebook_access_token']) ) {
+        $accessToken = $_SESSION['facebook_access_token'];
+    } else {
+        $accessToken = $helper->getAccessToken();
+    }
+
+} catch( FacebookResponseException $e ) {
+    echo 'Graph returned an error: ' . $e->getMessage();
+    exit;
+} catch( FacebookSDKException $e ) {
+    echo 'Facebook SDK returned an error: ' . $e->getMessage();
+    exit;
+}
+
+
 
 // Routes
-$app->get('/api',  function($request, $response) {
+$app->get('/api', function($request, $response) use ($helper, $redirectURL, $fbPermissions) {
 
+    var_dump($helper->getLoginUrl($redirectURL, $fbPermissions));
 
 
 });
